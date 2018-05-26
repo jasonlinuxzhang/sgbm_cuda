@@ -14,9 +14,6 @@
 #define WARP_SIZE 32
 
 #define MAX_DISPARITY 128
-#define SADWINDOWSIZE 5 
-#define SW2 (SADWINDOWSIZE/2)
-#define SH2 (SADWINDOWSIZE/2)
 
 using namespace std;
 
@@ -28,6 +25,7 @@ typedef struct _SGM_PARAMS
 	int P1;
 	int P2;
 	int preFilterCap;
+	int BlockSize;
 }SGM_PARAMS;
 
 
