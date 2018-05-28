@@ -16,7 +16,7 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 			pre_row_add = 0;
 			next_row_add = 1;
 		}
-		else if(d_rows == row) //最后一行
+		else if(d_rows - 1 == row) //最后一行
 		{
 			pre_row_add = 1;
 			next_row_add = 0;
@@ -40,6 +40,7 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 													    + d_imgright_data[(row - pre_row_add) * d_cols + col + 1] - d_imgright_data[(row - pre_row_add) * d_cols + col - 1] \
 													    + d_imgright_data[(row + next_row_add) * d_cols + col + 1] - d_imgright_data[(row + next_row_add) * d_cols + col - 1] \
 													   ];
+				//printf("row=%d, x=%d, right_data=%d\n", row, col, d_imgright_data[row * d_cols + col]);
 
 	//			printf("row=%d,col=%d,grad=%d, pre_row=%d, org_imgdata=%d\n", row, col, d_imgleft_grad[row * d_cols + col], (row - pre_row_add), d_imgleft_data[row * d_cols + col ]);
 				//printf("row=%d,col=%d,grad=%d, pre_row=%d, org_imgdata=%d\n", row, col, d_imgright_grad[row * d_cols + col], (row - pre_row_add), d_imgright_data[row * d_cols + col ]);
@@ -48,6 +49,9 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 			d_imgleft_grad[row * d_cols + 0] = d_tab[0];
 			d_imgright_grad[row * d_cols + 0] = d_tab[0];
 
+
+			d_imgleft_data[row * d_cols + 0] = d_tab[0];
+			d_imgright_data[row * d_cols + 0] = d_tab[0]; //此处仿照opencv代码，感觉opencv不对
 
 		}
 		else if(col_start + pixels_number_thread > d_cols - 1)  //处理最右端的像素,因为这一个线程可能和其他线程处理的像素个数不一样
@@ -64,6 +68,7 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 													    + d_imgright_data[(row + next_row_add) * d_cols + col + 1] - d_imgright_data[(row + next_row_add) * d_cols + col - 1] \
 													   ];
 			
+				//printf("row=%d, x=%d, right_data=%d\n", row, col, d_imgright_data[row * d_cols + col]);
 			//	printf("row=%d,col=%d,grad=%d, pre_row=%d, org_imgdata=%d\n", row, col, d_imgleft_grad[row * d_cols + col], (row - pre_row_add), d_imgleft_data[row * d_cols + col ]);
 				//printf("row=%d,col=%d,grad=%d, pre_row=%d, org_imgdata=%d\n", row, col, d_imgright_grad[row * d_cols + col], (row - pre_row_add), d_imgright_data[row * d_cols + col ]);
 				//printf("y=%d,%d=%d\n", row, col,  d_imgright_grad[row * d_cols + col]);
@@ -74,6 +79,7 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 
 			d_imgleft_data[row * d_cols + d_cols - 1] = d_tab[0];
 			d_imgright_data[row * d_cols + d_cols - 1] = d_tab[0]; //此处仿照opencv代码，感觉opencv不对
+				//printf("row=%d, x=%d, right_data=%d\n", row, d_cols-1, d_imgright_data[row * d_cols + d_cols - 1]);
 		}
 		else
 		{
@@ -88,6 +94,7 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 													    + d_imgright_data[(row - pre_row_add) * d_cols + col + 1] - d_imgright_data[(row - pre_row_add) * d_cols + col - 1] \
 													    + d_imgright_data[(row + next_row_add) * d_cols + col + 1] - d_imgright_data[(row + next_row_add) * d_cols + col - 1] \
 													   ];
+				//printf("row=%d, x=%d, right_data=%d\n", row, col, d_imgright_data[row * d_cols + col]);
 			//	printf("row=%d,col=%d,grad=%d, pre_row=%d, org_imgdata=%d\n", row, col, d_imgleft_grad[row * d_cols + col], (row - pre_row_add), d_imgleft_data[row * d_cols + col ]);
 				//printf("row=%d,col=%d,grad=%d, pre_row=%d, org_imgdata=%d\n", row, col, d_imgright_grad[row * d_cols + col], (row - pre_row_add), d_imgright_data[row * d_cols + col ]);
 				//printf("y=%d,%d=%d\n", row, col,  d_imgright_grad[row * d_cols + col]);
@@ -133,10 +140,11 @@ __global__ void get_pixel_diff(const PixType * d_imgleft_buf, const PixType * d_
 		int c1 = max(0, v - u1); c1 = max(c1, u0 - v);
 
 		int pre_cost = d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity];
-		d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity] = d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity] + (min(c0, c1) >> diff_scale);
-		//if(row == 108 && x == 638 && now_disparity == 0)
+   		d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity] = d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity] + (min(c0, c1) >> diff_scale);
+		//if(row ==479 && now_disparity == 0 && x == MAX_DISPARITY+1)
+		//if(row ==479 && x == 128)
 		//{
-		//	printf("large row=%d, cols=%d, d=%d, d_cost=%d, pixdiff_left=%d, pixdif_right(%d-%d)=%d ul=%d, ur=%d, vl=%d, vr=%d, v0=%d,v1=%d, u0=%d, u1=%d, pre_cost=%d, c0=%d, c1=%d, ur_sub=%d,diff_scale=%d\n", row, x, now_disparity, d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity], u, x, now_disparity,v, ul, ur, vl, vr, v0, v1, u0, u1, pre_cost,c0,c1, local_imgright_buf[x+1],diff_scale);
+		//	printf("large row=%d, cols=%d, d=%d, d_pixdiff=%d, pixdiff_left=%d, pixdif_right(%d-%d)=%d ul=%d, ur=%d, vl=%d, vr=%d, v0=%d,v1=%d, u0=%d, u1=%d, pre_cost=%d, c0=%d, c1=%d, ur_sub=%d,diff_scale=%d\n", row, x, now_disparity, d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity], u, x, now_disparity,v, ul, ur, vl, vr, v0, v1, u0, u1, pre_cost,c0,c1, local_imgright_buf[x+1],diff_scale);
 
 		//}
 		/*
@@ -147,7 +155,6 @@ __global__ void get_pixel_diff(const PixType * d_imgleft_buf, const PixType * d_
 	    }
 		*/
 	}
-
 }
 
 __global__ void get_hsum(const CostType *d_pixel_diff, CostType *d_hsum, int rows, int cols, int blocksize)
@@ -166,6 +173,7 @@ __global__ void get_hsum(const CostType *d_pixel_diff, CostType *d_hsum, int row
 	{
 		int scale = x == 0 ? SW2 + 1 : 1;
 		local_hsumAdd[now_disparity] = local_hsumAdd[now_disparity] + local_pixel_diff[x + now_disparity] * scale;
+	//	if(row == 479 && now_disparity == 0)
 	//	printf("row=%d,d=%d,rang_x=%d, scale=%d, pixdiff=%d, src_pixdiff=%d,hsumadd=%d\n", row, now_disparity,x/MAX_DISPARITY, scale, local_pixel_diff[x + now_disparity], d_pixel_diff[row * cols *MAX_DISPARITY + MAX_DISPARITY * MAX_DISPARITY + now_disparity ], local_hsumAdd[now_disparity]);
 	}
 	//printf("final row=%d,d=%d,hsumAdd=%d\n", row, now_disparity, local_hsumAdd[now_disparity]);
@@ -176,8 +184,8 @@ __global__ void get_hsum(const CostType *d_pixel_diff, CostType *d_hsum, int row
 		const CostType *pixSub = local_pixel_diff + max(x - (SW2 + 1) * MAX_DISPARITY, 0);
 		local_hsumAdd[x + now_disparity] = local_hsumAdd[x - MAX_DISPARITY + now_disparity] + pixAdd[now_disparity] - pixSub[now_disparity];
 
-	//	if(row == 108 && x >500)
-	//	printf("row=%d,x=%d,d=%d,hsumAdd=%d, pixSub=%d, pixAdd=%d, hsumAdd_pre=%d, pixAddIndex=%d, SW2=%d, max_col=%d, x=%d\n", row, x/MAX_DISPARITY, now_disparity, local_hsumAdd[x+now_disparity], pixSub[now_disparity],pixAdd[now_disparity], local_hsumAdd[x - MAX_DISPARITY + now_disparity], min(x + SW2 * MAX_DISPARITY, (max_col - 1) * MAX_DISPARITY), SW2, max_col, x);
+		//if(row == 479 && now_disparity == 0)
+		//	printf("row=%d,x=%d,d=%d,hsumAdd=%d, pixSub=%d, pixAdd=%d, hsumAdd_pre=%d, pixAddIndex=%d, SW2=%d, max_col=%d, x=%d\n", row, x/MAX_DISPARITY + MAX_DISPARITY, now_disparity, local_hsumAdd[x+now_disparity], pixSub[now_disparity],pixAdd[now_disparity], local_hsumAdd[x - MAX_DISPARITY + now_disparity], min(x + SW2 * MAX_DISPARITY, (max_col - 1) * MAX_DISPARITY), SW2, max_col, x);
 	}
 }
 
@@ -196,13 +204,43 @@ __global__ void get_cost(const CostType *d_hsumAdd, CostType *d_cost, int p2, in
 	{
 		int scale = i == 0 ? SH2 + 1 : 1;
 		local_cost[now_disparity] = local_cost[0 + now_disparity] + local_hsumAdd[i * cols * MAX_DISPARITY + now_disparity] * scale;
+		//if(col == 128 && now_disparity == 127)
+		//	printf("k=%d,col=%d,d=%d,hsumAdd=%d,scale=%d,C=%d\n", i,col,now_disparity,local_hsumAdd[i * cols * MAX_DISPARITY + now_disparity],scale,local_cost[now_disparity]);
 	}
  
-	for(int y = 1; y < rows; y++)
+	if(128 == col)  //copy opencv, 最左边第一列和第一行保持一致
 	{
-		const CostType *h_sumSub = local_hsumAdd+ (y >= blocksize ? cols * MAX_DISPARITY * (y - blocksize) : 0);
+		int k = 0;
+		for(k = 1 + SH2; k < rows; k++)
+		{
+			int y = k - SH2;
+			local_cost[cols * MAX_DISPARITY * y + now_disparity] = local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity];
+		}
+
+		for(int y = k - SH2; y < rows; y++)
+		{
+			local_cost[cols * MAX_DISPARITY * y + now_disparity] = local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity];
+		}
+	}
+	else
+	{
+		int k = 0;
+		for(k = 1 + SH2; k < rows; k++)
+		{
+			int y = k - SH2;
+			const CostType *h_sumSub = local_hsumAdd + (k >= blocksize ? cols * MAX_DISPARITY * (k - blocksize) : 0);
+
+			local_cost[cols * MAX_DISPARITY * y + now_disparity] = local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity] + local_hsumAdd[cols * MAX_DISPARITY * k + now_disparity] - h_sumSub[now_disparity];
+		//	if(475 == y && col == 129)
+		//	{
+		//		printf("y=%d,col=%d,d=%d,c_pre=%d,hsumadd=%d,hsumsub=%d,c=%d, src_hsumadd=%d, src_hsumsub=%d\n", y, col, now_disparity,  local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity], local_hsumAdd[cols * MAX_DISPARITY * k + now_disparity],  h_sumSub[now_disparity], local_cost[cols * MAX_DISPARITY * y + now_disparity] , d_hsumAdd[k*cols * MAX_DISPARITY + col * MAX_DISPARITY + now_disparity], d_hsumAdd[col * MAX_DISPARITY]);
+		//	}
+		}
 		
-		local_cost[cols * MAX_DISPARITY * y + now_disparity] = local_cost[cols * MAX_DISPARITY * (y - 1)] + local_hsumAdd[cols * MAX_DISPARITY * y + now_disparity] - h_sumSub[now_disparity];
+		for(int y = k - SH2; y < rows; y++)  //fill the last rows with previous value
+		{
+			local_cost[cols * MAX_DISPARITY *y + now_disparity] = local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity];	
+		}
 	}
 }
 

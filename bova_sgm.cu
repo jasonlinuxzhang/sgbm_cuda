@@ -57,8 +57,8 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	cudaEventCreate(&stop);
 
 	cudaEventRecord(start, 0);
-	CUDA_CHECK_RETURN(cudaMemcpy(d_imgleft_data, left_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
-	CUDA_CHECK_RETURN(cudaMemcpy(d_imgright_data, right_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
+	CUDA_CHECK_RETURN(cudaMemcpyAsync(d_imgleft_data, left_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
+	CUDA_CHECK_RETURN(cudaMemcpyAsync(d_imgright_data, right_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
 	
 	get_gradient<<<rows, WARP_SIZE>>>(d_imgleft_data, d_imgright_data, d_imgleft_grad, d_imgright_grad, d_clibTab + TAB_OFS, rows, cols);
 
@@ -114,7 +114,7 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	ofstream  cost0;
 	cost0.open("cost.out", ios::out);
 	for(int i=0;i<rows;i++)
-	for(int j = 0; j < cols; j++ )
+	for(int j = MAX_DISPARITY; j < cols; j++ )
 		for(int k=0; k < MAX_DISPARITY; k++)
 			cost0<<"cost[row="<<i<<" col="<<j<<" d="<<k<<"]: "<<h_cost[(i * cols + j)*MAX_DISPARITY + k]<<endl;
 	cost0.close();
