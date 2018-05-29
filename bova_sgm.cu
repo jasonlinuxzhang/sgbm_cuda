@@ -60,7 +60,8 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	CUDA_CHECK_RETURN(cudaMemcpyAsync(d_imgleft_data, left_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
 	CUDA_CHECK_RETURN(cudaMemcpyAsync(d_imgright_data, right_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
 	
-	get_gradient<<<rows, WARP_SIZE>>>(d_imgleft_data, d_imgright_data, d_imgleft_grad, d_imgright_grad, d_clibTab + TAB_OFS, rows, cols);
+//	get_gradient<<<rows, WARP_SIZE>>>(d_imgleft_data, d_imgright_data, d_imgleft_grad, d_imgright_grad, d_clibTab + TAB_OFS, rows, cols);
+	get_gradient<<<1, rows>>>(d_imgleft_data, d_imgright_data, d_imgleft_grad, d_imgright_grad, d_clibTab + TAB_OFS, rows, cols); //耗时，后期可以优化
 
 
 	CUDA_CHECK_RETURN(cudaMemset(d_pixDiff, 0, sizeof(CostType) * img_size * MAX_DISPARITY));
@@ -77,6 +78,51 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	cudaEventDestroy(start);
 	cudaEventDestroy(stop);
 	printf("alogrithm cost:%fms\n", cost_t);
+
+#if 0
+	
+	double cpy_start = cv::getTickCount();
+	PixType *h_grad = (PixType *)malloc(sizeof(PixType) * img_size);
+	if(!h_grad)
+	{
+		printf("error\n");
+	}
+	CUDA_CHECK_RETURN(cudaMemcpy(h_grad, d_imgleft_grad, sizeof(PixType) * img_size, cudaMemcpyDeviceToHost));
+	double cpy_end = cv::getTickCount();
+	printf("copy data cost:%lfms\n", (cpy_end - cpy_start)*1000/cv::getTickFrequency());
+
+	ofstream  gradient_file;
+	gradient_file.open("grad_left.out", ios::out);
+	for(int i= 0 ; i < rows; i++)
+	for(int j = 0; j < cols; j++ )
+			gradient_file<<"grad[row="<<i<<" col="<<j<<"]="<<(int)h_grad[i * cols +j]<<endl;
+	gradient_file.close();
+
+	CUDA_CHECK_RETURN(cudaMemcpy(h_grad, d_imgright_grad, sizeof(PixType) * img_size, cudaMemcpyDeviceToHost));
+	gradient_file.open("grad_right.out", ios::out);
+	for(int i= 0 ; i < rows; i++)
+	for(int j = 0; j < cols; j++ )
+			gradient_file<<"grad[row="<<i<<" col="<<j<<"]="<<(int)h_grad[i * cols +j]<<endl;
+	gradient_file.close();
+
+	CUDA_CHECK_RETURN(cudaMemcpy(h_grad, d_imgleft_data, sizeof(PixType) * img_size, cudaMemcpyDeviceToHost));
+	gradient_file.open("date_left.out", ios::out);
+	for(int i= 0 ; i < rows; i++)
+	for(int j = 0; j < cols; j++ )
+			gradient_file<<"data[row="<<i<<" col="<<j<<"]="<<(int)h_grad[i * cols +j]<<endl;
+	gradient_file.close();
+
+	CUDA_CHECK_RETURN(cudaMemcpy(h_grad, d_imgright_data, sizeof(PixType) * img_size, cudaMemcpyDeviceToHost));
+	gradient_file.open("date_right.out", ios::out);
+	for(int i= 0 ; i < rows; i++)
+	for(int j = 0; j < cols; j++ )
+			gradient_file<<"data[row="<<i<<" col="<<j<<"]="<<(int)h_grad[i * cols +j]<<endl;
+	gradient_file.close();
+
+	free(h_grad);
+#endif
+
+
 #if 0
 	
 	double cpy_start = cv::getTickCount();
@@ -116,7 +162,7 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	for(int i=0;i<rows;i++)
 	for(int j = MAX_DISPARITY; j < cols; j++ )
 		for(int k=0; k < MAX_DISPARITY; k++)
-			cost0<<"cost[row="<<i<<" col="<<j<<" d="<<k<<"]: "<<h_cost[(i * cols + j)*MAX_DISPARITY + k]<<endl;
+			cost0<<"C[row="<<i<<" col="<<j<<" d="<<k<<"]: "<<h_cost[(i * cols + j)*MAX_DISPARITY + k]<<endl;
 	cost0.close();
 	free(h_cost);
 #endif

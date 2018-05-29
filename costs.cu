@@ -1,5 +1,6 @@
 #include "common.h"
 
+/*
 __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, PixType *d_imgleft_grad, PixType *d_imgright_grad, PixType *d_tab, int d_rows, int d_cols)
 {
 	int pixels_number_thread = d_cols / WARP_SIZE;
@@ -16,7 +17,7 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 			pre_row_add = 0;
 			next_row_add = 1;
 		}
-		else if(d_rows - 1 == row) //最后一行
+		else if(d_rows -1 == row) //最后一行
 		{
 			pre_row_add = 1;
 			next_row_add = 0;
@@ -109,6 +110,61 @@ __global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, 
 	}
 
 }
+*/
+
+
+__global__ void get_gradient(PixType *d_imgleft_data, PixType *d_imgright_data, PixType *d_imgleft_grad, PixType *d_imgright_grad, PixType *d_tab, int d_rows, int d_cols)
+{
+	int row = threadIdx.x;  //该线程所在行
+	int col = 0;
+	int pre_row_add = 0, next_row_add = 0;
+
+	if(0 == row)//第一行
+	{
+		pre_row_add = 0;
+		next_row_add = 1;
+	}
+	else if(d_rows -1 == row) //最后一行
+	{
+		pre_row_add = 1;
+		next_row_add = 0;
+	}
+	else
+	{
+		pre_row_add = 1;
+		next_row_add = 1;
+	}
+
+	for(col = 1; col < d_cols - 1; col++)
+	{
+		d_imgleft_grad[row * d_cols + col] = d_tab[ (d_imgleft_data[row * d_cols + col + 1] - d_imgleft_data[row * d_cols + col - 1]) * 2 \
+											 + d_imgleft_data[(row - pre_row_add) * d_cols + col + 1] - d_imgleft_data[(row - pre_row_add) * d_cols + col - 1] \
+											 + d_imgleft_data[(row + next_row_add) * d_cols + col + 1] - d_imgleft_data[(row + next_row_add) * d_cols + col - 1] \
+		];
+		d_imgright_grad[row * d_cols + col] = d_tab[ (d_imgright_data[row * d_cols + col + 1] - d_imgright_data[row * d_cols + col - 1]) * 2 \
+											  + d_imgright_data[(row - pre_row_add) * d_cols + col + 1] - d_imgright_data[(row - pre_row_add) * d_cols + col - 1] \
+											  + d_imgright_data[(row + next_row_add) * d_cols + col + 1] - d_imgright_data[(row + next_row_add) * d_cols + col - 1] \
+		];
+	}
+
+
+	__syncthreads();
+
+	d_imgleft_grad[row * d_cols + 0] = d_tab[0];
+	d_imgright_grad[row * d_cols + 0] = d_tab[0];
+
+
+	d_imgleft_data[row * d_cols + 0] = d_tab[0];
+	d_imgright_data[row * d_cols + 0] = d_tab[0]; //此处仿照opencv代码，感觉opencv不对
+
+	d_imgleft_grad[row * d_cols + d_cols - 1] = d_tab[0];
+	d_imgright_grad[row * d_cols + d_cols - 1] = d_tab[0];
+
+	d_imgleft_data[row * d_cols + d_cols - 1] = d_tab[0];
+	d_imgright_data[row * d_cols + d_cols - 1] = d_tab[0]; //此处仿照opencv代码，感觉opencv不对
+
+}
+
 
 //每行有MAX_DISPARITY个线程，每个线程处理该行所有点的特定视差
 __global__ void get_pixel_diff(const PixType * d_imgleft_buf, const PixType * d_imgright_buf, int rows, int cols, int diff_scale, CostType *d_cost) 
