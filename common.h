@@ -14,11 +14,15 @@
 #define WARP_SIZE 32
 
 #define MAX_DISPARITY 128
+#define INVALID_DISP_SCALED -16
+#define DISP_SCALE 16
+#define DISP_SHIFT 4
 
 using namespace std;
 
 typedef unsigned char PixType;
 typedef short CostType;
+typedef short DispType;
 
 typedef struct _SGM_PARAMS
 {
@@ -26,6 +30,8 @@ typedef struct _SGM_PARAMS
 	int P2;
 	int preFilterCap;
 	int BlockSize;
+	int uniquenessRatio;
+	int disp12MaxDiff;
 }SGM_PARAMS;
 
 
