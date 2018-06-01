@@ -13,7 +13,7 @@
 
 #define WARP_SIZE 32
 
-#define MAX_DISPARITY 128
+#define MAX_DISPARITY 96
 #define INVALID_DISP_SCALED -16
 #define DISP_SCALE 16
 #define DISP_SHIFT 4

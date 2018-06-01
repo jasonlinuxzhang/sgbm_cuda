@@ -197,19 +197,6 @@ __global__ void get_pixel_diff(const PixType * d_imgleft_buf, const PixType * d_
 
 		int pre_cost = d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity];
    		d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity] = d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity] + (min(c0, c1) >> diff_scale);
-		//if(row ==479 && now_disparity == 0 && x == MAX_DISPARITY+1)
-		//if(row ==479 && x == 128)
-		//{
-		//	printf("large row=%d, cols=%d, d=%d, d_pixdiff=%d, pixdiff_left=%d, pixdif_right(%d-%d)=%d ul=%d, ur=%d, vl=%d, vr=%d, v0=%d,v1=%d, u0=%d, u1=%d, pre_cost=%d, c0=%d, c1=%d, ur_sub=%d,diff_scale=%d\n", row, x, now_disparity, d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity], u, x, now_disparity,v, ul, ur, vl, vr, v0, v1, u0, u1, pre_cost,c0,c1, local_imgright_buf[x+1],diff_scale);
-
-		//}
-		/*
-		if(diff_scale == 0)
-		{
-			printf("row=%d, cols=%d, d=%d, d_cost=%d, pixdiff_left=%d, pixdif_right(%d-%d)=%d ul=%d, ur=%d, vl=%d, vr=%d, lmin=%d,lmax=%d, u0=%d, u1=%d, pre_cost=%d, c0=%d, c1=%d\n", row, x, now_disparity, d_cost[(row * cols + x) * MAX_DISPARITY + now_disparity], u, x, MAX_DISPARITY,v, ul, ur, vl, vr, v0, v1, u0, u1, pre_cost,c0,c1);
-		//	printf("y=%d,%d=%d, d=%d src=%d %d\n", row, x-now_disparity, v, now_disparity,d_imgright_buf[row * cols + x-now_disparity], local_imgright_buf[x-now_disparity] );
-	    }
-		*/
 	}
 }
 
@@ -287,10 +274,6 @@ __global__ void get_cost(const CostType *d_hsumAdd, CostType *d_cost, int p2, in
 			const CostType *h_sumSub = local_hsumAdd + (k >= blocksize ? cols * MAX_DISPARITY * (k - blocksize) : 0);
 
 			local_cost[cols * MAX_DISPARITY * y + now_disparity] = local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity] + local_hsumAdd[cols * MAX_DISPARITY * k + now_disparity] - h_sumSub[now_disparity];
-		//	if(475 == y && col == 129)
-		//	{
-		//		printf("y=%d,col=%d,d=%d,c_pre=%d,hsumadd=%d,hsumsub=%d,c=%d, src_hsumadd=%d, src_hsumsub=%d\n", y, col, now_disparity,  local_cost[cols * MAX_DISPARITY * (y - 1) + now_disparity], local_hsumAdd[cols * MAX_DISPARITY * k + now_disparity],  h_sumSub[now_disparity], local_cost[cols * MAX_DISPARITY * y + now_disparity] , d_hsumAdd[k*cols * MAX_DISPARITY + col * MAX_DISPARITY + now_disparity], d_hsumAdd[col * MAX_DISPARITY]);
-		//	}
 		}
 		
 		for(int y = k - SH2; y < rows; y++)  //fill the last rows with previous value
