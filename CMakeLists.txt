@@ -9,7 +9,8 @@ endif(COMMAND cmake_policy)
 
 SET(EXECUTABLE_OUTPUT_PATH ".")
 
-set(OpenCV_DIR "/opt/disk/install/share/OpenCV")
+#set(OpenCV_DIR "/opt/disk/install/share/OpenCV")
+set(OpenCV_DIR "/usr/local/opencv3.2/share/OpenCV")
 
 find_package(ZED 2 REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -47,12 +48,13 @@ set(
 	${CUDA_NVCC_FLAGS};
 	-O3
 	#-gencode arch=compute_20,code=[sm_20,sm_21] 666 CHECK THIS DEPEND ON THE PLATFORM
-	-gencode arch=compute_30,code=sm_30
-	-gencode arch=compute_35,code=sm_35
-	-gencode arch=compute_50,code=[sm_50,compute_50]
-	-gencode arch=compute_52,code=[sm_52,compute_52]
+#	-gencode arch=compute_30,code=sm_30
+#	-gencode arch=compute_35,code=sm_35
+#	-gencode arch=compute_50,code=[sm_50,compute_50]
+#	-gencode arch=compute_52,code=[sm_52,compute_52]
 	-gencode arch=compute_61,code=sm_61
-	-gencode arch=compute_62,code=sm_62
+#	-gencode arch=compute_62,code=sm_62
+#	-G
 )
 
 
