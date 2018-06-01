@@ -12,6 +12,7 @@ static CostType *d_cost;
 static CostType *d_hsum;
 static CostType *d_sp;
 static DispType *d_disp;
+static DispType *d_raw_disp;
 static CostType *d_mins;
 static CostType *d_outdisp;
 
@@ -64,6 +65,7 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 		CUDA_CHECK_RETURN(cudaMalloc((void **)&d_hsum, sizeof(CostType) * img_size * MAX_DISPARITY));	
 		CUDA_CHECK_RETURN(cudaMalloc((void **)&d_sp, sizeof(CostType) * img_size * MAX_DISPARITY));	
 		CUDA_CHECK_RETURN(cudaMalloc((void **)&d_disp, sizeof(DispType) * img_size));	
+		CUDA_CHECK_RETURN(cudaMalloc((void **)&d_raw_disp, sizeof(DispType) * img_size));	
 		CUDA_CHECK_RETURN(cudaMalloc((void **)&d_mins, sizeof(CostType) * img_size));	
 		CUDA_CHECK_RETURN(cudaMalloc((void **)&d_outdisp, sizeof(DispType) * img_size));	
 
@@ -81,7 +83,7 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 		exit(-1);
 	}
 	
-	double start = cv::getTickCount();
+//	double start = cv::getTickCount();
 	CUDA_CHECK_RETURN(cudaMemcpy(d_imgleft_data, left_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
 	CUDA_CHECK_RETURN(cudaMemcpy(d_imgright_data, right_img->ptr<PixType>(), sizeof(PixType) * img_size, cudaMemcpyHostToDevice));
 	
@@ -124,17 +126,17 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	cost_aggregation_rl<<<rows, WARP_SIZE>>>(d_cost, d_sp, p1, p2, cols, rows);
 	cudaDeviceSynchronize();
 
-	get_disparity<<<rows, cols - MAX_DISPARITY>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_disp2cost, d_disp2, cols, rows);
+	get_disparity<<<rows, cols - MAX_DISPARITY>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_raw_disp, d_disp2cost, d_disp2, cols, rows);
 	cudaDeviceSynchronize();
 	
-	lrcheck<<<1, cols>>>(d_disp, d_mins, d_disp2, d_disp2cost, disp12MaxDiff, cols, rows);
+	lrcheck<<<1, rows>>>(d_disp, d_mins, d_disp2, d_disp2cost, d_raw_disp, disp12MaxDiff, cols, rows);
 
 	MedianFilter<<<(img_size + MAX_DISPARITY - 1)/MAX_DISPARITY, MAX_DISPARITY>>>(d_disp, d_outdisp, rows, cols);
 
 	CUDA_CHECK_RETURN(cudaMemcpy(h_disparity, d_outdisp, sizeof(DispType) * img_size, cudaMemcpyDeviceToHost));
 
-	double end = cv::getTickCount();
-	printf("alogrithm cost:%fms\n", (end - start) * 1000 / cv::getTickFrequency());
+//	double end = cv::getTickCount();
+//	printf("alogrithm cost:%fms\n", (end - start) * 1000 / cv::getTickFrequency());
 
 #if 0
 	
@@ -248,7 +250,7 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	free(h_sp);
 #endif
 
-#if 1
+#if 0
 	
 	double cpy_start = cv::getTickCount();
 	CostType *h_disp = (CostType *)malloc(sizeof(DispType) * img_size);
@@ -256,7 +258,7 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	{
 		printf("error\n");
 	}
-	CUDA_CHECK_RETURN(cudaMemcpy(h_disp, d_disp2, sizeof(DispType) * img_size, cudaMemcpyDeviceToHost));
+	CUDA_CHECK_RETURN(cudaMemcpy(h_disp, d_disp, sizeof(DispType) * img_size, cudaMemcpyDeviceToHost));
 	double cpy_end = cv::getTickCount();
 	printf("copy data cost:%lfms\n", (cpy_end - cpy_start)*1000/cv::getTickFrequency());
 
@@ -269,6 +271,28 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	cost0.close();
 	free(h_disp);
 #endif
+
+#if 0
+	
+	double cpy_start = cv::getTickCount();
+	CostType *h_mins = (CostType *)malloc(sizeof(CostType) * img_size);
+	if(!h_mins)
+	{
+		printf("error\n");
+	}
+	CUDA_CHECK_RETURN(cudaMemcpy(h_mins, d_mins, sizeof(CostType) * img_size, cudaMemcpyDeviceToHost));
+	double cpy_end = cv::getTickCount();
+	printf("copy data cost:%lfms\n", (cpy_end - cpy_start)*1000/cv::getTickFrequency());
+
+	ofstream  cost0;
+	cost0.open("mins.out", ios::out);
+	for(int i=0;i<rows;i++)
+		for(int j = cols - 1; j >= MAX_DISPARITY; j-- )
+			cost0<<"y="<<i<<", x="<<j<<", minS="<<h_mins[i * cols + j]<<endl;
+	cost0.close();
+	free(h_mins);
+#endif
+
 
 
 	cv::Mat disparity_img(left_img->size(), CV_16S, h_disparity);	

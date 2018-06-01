@@ -663,7 +663,7 @@ __global__ void cost_aggregation_rl(const CostType *d_cost, CostType *d_sp, int 
 
 
 
-__global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *d_mins, int uniquenessRatio, CostType *disp2cost, DispType *disp2, int cols, int rows)
+__global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *d_mins, int uniquenessRatio, DispType * d_raw_disp, CostType *disp2cost, DispType *disp2, int cols, int rows)
 {
 	int row = blockIdx.x;
 	int col = threadIdx.x + MAX_DISPARITY;
@@ -676,6 +676,19 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 	d_disp[row * cols + col] = INVALID_DISP_SCALED;
 	d_mins[row * cols + col] = SHRT_MAX;
 
+	d_raw_disp[row * cols + col] = INVALID_DISP_SCALED;
+	
+
+	/*
+	if(col == 0)
+	{
+		for(int i = 0; i < MAX_DISPARITY; i++)
+		{
+			d_disp[row * cols + i] = INVALID_DISP_SCALED;
+		}
+	}
+	*/
+
 	for(d = 0; d < MAX_DISPARITY; d++)
 	{
 		if(minS > local_sp[d])
@@ -684,6 +697,8 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 			bestDisp = d;
 		}
 	}
+
+	d_mins[row * cols + col] = minS;
 
 	for(d = 0; d < MAX_DISPARITY; d++)
 	{
@@ -696,6 +711,8 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 	if(d < MAX_DISPARITY)  //说明求得的视差不对，该点视差值取-16
 		return;	
 
+	d_raw_disp[row * cols + col] = bestDisp;
+
 	if(0 < bestDisp && bestDisp < MAX_DISPARITY - 1)
 	{
 		int denom2 = max(local_sp[bestDisp - 1] + local_sp[bestDisp + 1] - 2*local_sp[bestDisp], 1);
@@ -703,38 +720,41 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 	}
 	else
 		bestDisp = bestDisp * DISP_SCALE;
-
 //	printf("y=%d, x=%d, bestDisp=%d\n", row, col, bestDisp);
 	d_disp[row * cols + col] = bestDisp;
 
-	d_mins[row * cols + col] = minS;
 }
 
-__global__ void lrcheck(DispType * d_disp, const CostType * d_mins, DispType *disp2, CostType *disp2cost, int disp12MaxDiff, int cols, int rows)
+__global__ void lrcheck(DispType * d_disp, const CostType * d_mins, DispType *disp2, CostType *disp2cost, CostType *d_raw_disp, int disp12MaxDiff, int cols, int rows)
 {
 	int row = threadIdx.x;
 	CostType *local_disp2cost = disp2cost + row * cols;
 	DispType *local_disp2 = disp2 + row * cols;
 	const CostType *local_dmins = d_mins + row * cols;
 	DispType *local_disp = d_disp + row * cols;
+	DispType *local_raw_disp = d_raw_disp + row * cols;
 
-	for(int col = MAX_DISPARITY; col < cols; col++)
+	for(int col = 0; col < cols; col++)
 	{
 		local_disp2cost[col] = SHRT_MAX;
 		local_disp2[col] = INVALID_DISP_SCALED;
 	}	
 
-	for(int col = MAX_DISPARITY; col < cols; col++)
+	for(int col = cols - 1; col >= MAX_DISPARITY; col--) //从右往左，根据opencv，如果方向不对，则对大小判断右影响
 	{
-		int d = local_disp[col];
+		int d = local_raw_disp[col];
+		if(d == INVALID_DISP_SCALED)
+			continue;
 		int _x2 = col - d;
-		if(local_disp2cost[_x2] > local_disp[col])
+
+		if(local_disp2cost[_x2] > local_dmins[col])
 		{
 			local_disp2cost[_x2] = local_dmins[col];
 			local_disp2[_x2] = d;	
 		}	
-	}
 
+	}
+	
 	for(int col = MAX_DISPARITY; col < cols; col++)
 	{
 		int d1 = local_disp[col];
