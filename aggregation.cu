@@ -55,7 +55,7 @@ __global__ void cost_aggregation_lr(const CostType *d_cost, CostType *sp, int p1
 */
 
 /*
-	rows个线程块，一个线程块包含warp（32）个线程，一个线程块处理1行，每个线程处理该行的MAXD/WARP个视差
+	rows个线程块，一个线程块包含warp（32）个线程，一个线程块处理1行，每个线程处理该行的4个视差
 */
 __global__ void cost_aggregation_lr(const CostType *d_cost, CostType *d_sp, int p1, int p2, int cols, int rows)
 {
@@ -63,8 +63,8 @@ __global__ void cost_aggregation_lr(const CostType *d_cost, CostType *d_sp, int 
 	int disparity_start = threadIdx.x * (MAX_DISPARITY / WARP_SIZE);
 	const CostType *local_cost = d_cost + (row * cols + MAX_DISPARITY)* MAX_DISPARITY; //属于该行的起始地址, 每行的前MAX_DISPARITY列不能计算
 	CostType *local_sp = d_sp + (row * cols + MAX_DISPARITY) * MAX_DISPARITY;
-	
-	int disparities_every_thread = MAX_DISPARITY/WARP_SIZE;
+
+	int disparities_every_thread = MAX_DISPARITY/WARP_SIZE;	
 
 	__shared__ int delta;
 	__shared__ int _lr_pre[MAX_DISPARITY + 2];
@@ -77,11 +77,11 @@ __global__ void cost_aggregation_lr(const CostType *d_cost, CostType *d_sp, int 
 		delta = 0 + p2;
 		lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 	}
-
 	//利用各个线程，设置对应的lr_pre初始值
 	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
 
 	__syncthreads();
+	
 	
 	
     lr_pre[-1] = lr_pre[MAX_DISPARITY] = SHRT_MAX;  
@@ -148,7 +148,7 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 	const CostType *local_cost = d_cost + (MAX_DISPARITY + col)* MAX_DISPARITY; //属于该行的起始地址, 每行的前MAX_DISPARITY列不能计算
 	CostType *local_sp = d_sp + (MAX_DISPARITY + col) * MAX_DISPARITY;
 	
-	int disparities_every_thread = MAX_DISPARITY/WARP_SIZE;
+	int disparities_every_thread = MAX_DISPARITY / WARP_SIZE;
 
 	__shared__ int delta;
 	__shared__ int _lr_pre[MAX_DISPARITY + 2];
@@ -173,6 +173,7 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 	{
 		int minlr = SHRT_MAX;  
 		int d = disparity_start;		
+		
 		/*
 		lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 		minlr = min(minlr, lr_pre_temp[d]);
@@ -202,6 +203,7 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 			d++;
 		}
 
+
 		int min_pre_lr = warpReduceMin(minlr);
 		
 		if(0 == threadIdx.x)
@@ -222,7 +224,6 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 	if((col == cols - MAX_DISPARITY) && (row != rows)) 
 	{
 		col = 0;
-		//printf("row=%d, col=%d\n", row, col);
 
 		if(0 == threadIdx.x)
 		{
@@ -245,11 +246,12 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 		{
 			int minlr = SHRT_MAX;  
 			int d = disparity_start;		
+
+			/*
 			lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 			minlr = min(minlr, lr_pre_temp[d]);
 			local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 
-			/*
 			d++;
 			lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 			minlr = min(minlr, lr_pre_temp[d]);
@@ -342,13 +344,14 @@ __global__ void cost_aggregation_ud(const CostType *d_cost, CostType *d_sp, int 
 		local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 		*/
 
-		for(int  i = 0; i < disparities_every_thread; i++)
+		for(int i = 0; i < disparities_every_thread; i++)
 		{
 			lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 			minlr = min(minlr, lr_pre_temp[d]);
 			local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 			d++;
 		}
+
 
 		int min_pre_lr = warpReduceMin(minlr);
 		
@@ -374,8 +377,8 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 	const CostType *local_cost = d_cost + (MAX_DISPARITY + col)* MAX_DISPARITY; //属于该行的起始地址, 每行的前MAX_DISPARITY列不能计算
 	CostType *local_sp = d_sp + (MAX_DISPARITY + col) * MAX_DISPARITY;
 
-	int disparities_every_thread = MAX_DISPARITY / WARP_SIZE;	
-
+	int disparities_every_thread = MAX_DISPARITY/WARP_SIZE;
+	
 	__shared__ int delta;
 	__shared__ int _lr_pre[MAX_DISPARITY + 2];
 	__shared__ int _lr_pre_temp[MAX_DISPARITY + 2];
@@ -395,7 +398,7 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 	{
 		int minlr = SHRT_MAX;  
 		int d = disparity_start;		
-
+	
 		/*
 		lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 		minlr = min(minlr, lr_pre_temp[d]);
@@ -417,15 +420,13 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 		local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 		*/
 
-
-		for(int  i = 0; i < disparities_every_thread; i++)
+		for(int i = 0; i < disparities_every_thread; i++)
 		{
 			lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 			minlr = min(minlr, lr_pre_temp[d]);
 			local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 			d++;
 		}
-
 
 		int min_pre_lr = warpReduceMin(minlr);
 		
@@ -491,8 +492,7 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 			local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 			*/
 
-
-			for(int  i = 0; i < disparities_every_thread; i++)
+			for(int i = 0; i < disparities_every_thread; i++)
 			{
 				lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 				minlr = min(minlr, lr_pre_temp[d]);
@@ -551,7 +551,7 @@ __global__ void cost_aggregation_rl(const CostType *d_cost, CostType *d_sp, int 
 	{
 		int minlr = SHRT_MAX;  
 		int d = disparity_start;		
-
+		
 		/*
 		lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 		minlr = min(minlr, lr_pre_temp[d]);
@@ -573,7 +573,7 @@ __global__ void cost_aggregation_rl(const CostType *d_cost, CostType *d_sp, int 
 		local_sp[d] = safe_add(local_sp[d], lr_pre_temp[d]);
 		*/
 
-		for(int  i = 0; i < disparities_every_thread; i++)
+		for(int i = 0; i < disparities_every_thread; i++)
 		{
 			lr_pre_temp[d] = local_cost[d] +  min(lr_pre[d], min(lr_pre[d - 1] + p1, min(lr_pre[d+1] + p1, delta))) - delta;
 			minlr = min(minlr, lr_pre_temp[d]);
@@ -612,6 +612,7 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 
 	d_raw_disp[row * cols + col] = INVALID_DISP_SCALED;
 	
+
 	/*
 	if(col == 0)
 	{
@@ -641,7 +642,7 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 		}
 	}
 	
-	if(d < MAX_DISPARITY)  //说明求得的视差不对，该点视差值取INVALID_DISP_SCALED
+	if(d < MAX_DISPARITY)  //说明求得的视差不对，该点视差值取-16
 		return;	
 
 	d_raw_disp[row * cols + col] = bestDisp;
@@ -653,7 +654,7 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 	}
 	else
 		bestDisp = bestDisp * DISP_SCALE;
-
+//	printf("y=%d, x=%d, bestDisp=%d\n", row, col, bestDisp);
 	d_disp[row * cols + col] = bestDisp;
 
 }
@@ -673,7 +674,7 @@ __global__ void lrcheck(DispType * d_disp, const CostType * d_mins, DispType *di
 		local_disp2[col] = INVALID_DISP_SCALED;
 	}	
 
-	for(int col = cols - 1; col >= MAX_DISPARITY; col--) //opencv是从右往左比较。如果方向不对，则对大小判断有影响
+	for(int col = cols - 1; col >= MAX_DISPARITY; col--) //从右往左，根据opencv，如果方向不对，则对大小判断右影响
 	{
 		int d = local_raw_disp[col];
 		if(d == INVALID_DISP_SCALED)
