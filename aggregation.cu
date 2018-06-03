@@ -78,7 +78,12 @@ __global__ void cost_aggregation_lr(const CostType *d_cost, CostType *d_sp, int 
 		lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 	}
 	//利用各个线程，设置对应的lr_pre初始值
-	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+
+	for(int i = 0; i < disparities_every_thread; i++)
+	{
+		lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+	}
 
 	__syncthreads();
 	
@@ -161,7 +166,11 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 		delta = 0 + p2;
 		lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 	}
-	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	for(int i = 0; i < disparities_every_thread; i++)
+	{
+		lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+	}
 
 	__syncthreads();
 	
@@ -230,7 +239,11 @@ __global__ void cost_aggregation_ud_lr(const CostType *d_cost, CostType *d_sp, i
 			delta = 0 + p2;
 			lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 		}
-		lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+		for(int i = 0; i < disparities_every_thread; i++)
+		{
+			lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+		}
 
 		__syncthreads();
 
@@ -313,7 +326,11 @@ __global__ void cost_aggregation_ud(const CostType *d_cost, CostType *d_sp, int 
 		lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 	}
 	//利用各个线程，设置对应的lr_pre初始值
-	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	for(int i = 0; i < disparities_every_thread; i++)
+	{
+		lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+	}
 
 	__syncthreads();
 	
@@ -390,7 +407,11 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 		delta = 0 + p2;
 		lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 	}
-	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	for(int i = 0; i < disparities_every_thread; i++)
+	{
+		lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+	}
 
 	__syncthreads();
 	
@@ -454,7 +475,11 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 			delta = 0 + p2;
 			lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 		}
-		lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+		for(int i = 0; i < disparities_every_thread; i++)
+		{
+			lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+		}
 
 		__syncthreads();
 
@@ -539,7 +564,11 @@ __global__ void cost_aggregation_rl(const CostType *d_cost, CostType *d_sp, int 
 		lr_pre[-1] = lr_pre[MAX_DISPARITY] = lr_pre_temp[-1] = lr_pre_temp[MAX_DISPARITY] = SHRT_MAX;
 	}
 	//利用各个线程，设置对应的lr_pre初始值
-	lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	//lr_pre[disparity_start] = lr_pre[disparity_start + 1] = lr_pre[disparity_start + 2] = lr_pre[disparity_start + 3] = lr_pre_temp[disparity_start] = lr_pre_temp[disparity_start + 1] = lr_pre_temp[disparity_start + 2] = lr_pre_temp[disparity_start + 3] = 0;
+	for(int i = 0; i < disparities_every_thread; i++)
+	{
+		lr_pre[disparity_start + i] = lr_pre_temp[disparity_start + i] = 0;
+	}
 
 	__syncthreads();
 	

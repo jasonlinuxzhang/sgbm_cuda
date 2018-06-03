@@ -190,18 +190,43 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	{
 		printf("error\n");
 	}
-	CUDA_CHECK_RETURN(cudaMemcpy(h_grad, d_imgleft_grad, sizeof(PixType) * img_size, cudaMemcpyDeviceToHost));
+	CUDA_CHECK_RETURN(cudaMemcpy(h_grad, d_pixDiff, sizeof(PixType) * img_size * MAX_DISPARITY, cudaMemcpyDeviceToHost));
 	double cpy_end = cv::getTickCount();
 	printf("copy data cost:%lfms\n", (cpy_end - cpy_start)*1000/cv::getTickFrequency());
 
 	ofstream  gradient_file;
-	gradient_file.open("grad.out", ios::out);
+	gradient_file.open("pixdiff.out", ios::out);
 	for(int i= 0 ; i < rows; i++)
-	for(int j = 0; j < cols; j++ )
-			gradient_file<<"grad[row="<<i<<" col="<<j<<"]="<<(int)h_grad[i * cols +j]<<endl;
+	for(int j = MAX_DISPARITY; j < cols; j++ )
+		for(int k = 0; k < MAX_DISPARITY; k++)
+			gradient_file<<"[row="<<i<<" col="<<j<<" d="<<k<<"]:"<<(int)h_grad[(i * cols +j)*MAX_DISPARITY + k]<<endl;
 	gradient_file.close();
 	free(h_grad);
 #endif
+
+#if 0
+	
+	double cpy_start = cv::getTickCount();
+	CostType *h_cost = (CostType *)malloc(sizeof(CostType) * img_size * MAX_DISPARITY);
+	if(!h_cost)
+	{
+		printf("error\n");
+	}
+	CUDA_CHECK_RETURN(cudaMemcpy(h_cost, d_hsum, sizeof(CostType) * img_size * MAX_DISPARITY, cudaMemcpyDeviceToHost));
+	double cpy_end = cv::getTickCount();
+	printf("copy data cost:%lfms\n", (cpy_end - cpy_start)*1000/cv::getTickFrequency());
+
+
+	ofstream  cost0;
+	cost0.open("hsum.out", ios::out);
+	for(int i=0;i<rows;i++)
+	for(int j = MAX_DISPARITY; j < cols; j++ )
+		for(int k=0; k < MAX_DISPARITY; k++)
+			cost0<<"[row="<<i<<", col="<<j<<", d="<<k<<"]: "<<h_cost[(i * cols + j)*MAX_DISPARITY + k]<<endl;
+	cost0.close();
+	free(h_cost);
+#endif
+
 
 #if 0
 	
@@ -221,10 +246,12 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	for(int i=0;i<rows;i++)
 	for(int j = MAX_DISPARITY; j < cols; j++ )
 		for(int k=0; k < MAX_DISPARITY; k++)
-			cost0<<"C[row="<<i<<" col="<<j<<" d="<<k<<"]: "<<h_cost[(i * cols + j)*MAX_DISPARITY + k]<<endl;
+			cost0<<"[row="<<i<<", col="<<j<<", d="<<k<<"]: "<<h_cost[(i * cols + j)*MAX_DISPARITY + k]<<endl;
 	cost0.close();
 	free(h_cost);
 #endif
+
+
 
 
 #if 0

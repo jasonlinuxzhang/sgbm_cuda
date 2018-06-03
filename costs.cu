@@ -251,7 +251,7 @@ __global__ void get_cost(const CostType *d_hsumAdd, CostType *d_cost, int p2, in
 		//	printf("k=%d,col=%d,d=%d,hsumAdd=%d,scale=%d,C=%d\n", i,col,now_disparity,local_hsumAdd[i * cols * MAX_DISPARITY + now_disparity],scale,local_cost[now_disparity]);
 	}
  
-	if(128 == col)  //copy opencv, 最左边第一列和第一行保持一致
+	if(MAX_DISPARITY == col)  //copy opencv, 最左边第一列和第一行保持一致
 	{
 		int k = 0;
 		for(k = 1 + SH2; k < rows; k++)
