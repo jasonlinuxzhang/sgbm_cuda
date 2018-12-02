@@ -5,29 +5,34 @@ Opencv does not implement the gpu version of the sgm algorithm, this project is 
 
 
 **How to compile and use** 
+
 mkdir build 
+
 cd build 
+
 cmake .. 
+
 make 
+
 Regarding the use of the program, you can look at the program logic in the main function, which is very simple. 
 
 
 **Finally**
+
 The program is based on opencv3.4 and cuda9.0, and the program assumes that the left and right images have been corrected.
 
 If you find this program useful, please give me a star, thank you.
 
 
 **Program performance display**
+
 If you want to watch the recorded demo video, click
 [Road effect][1]
 
 
 or
-[example1][2]
-[example2][3]
+![example1]https://github.com/jasonlinuxzhang/sgm_cuda/blob/master/example1.jpg
+![example2]https://github.com/jasonlinuxzhang/sgm_cuda/blob/master/example2.jpg
 
 
   [1]: https://v.youku.com/v_show/id_XMzk0NjE1MDEwNA==.html?spm=a2hzp.8253869.0.0
-  [2]: https://github.com/jasonlinuxzhang/sgm_cuda/blob/master/example1.jpg
-  [3]: https://github.com/jasonlinuxzhang/sgm_cuda/blob/master/example2.jpg
