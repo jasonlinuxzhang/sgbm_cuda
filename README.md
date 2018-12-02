@@ -16,9 +16,8 @@ The program is based on opencv3.4 and cuda9.0, and the program assumes that the 
 
 
 **Program performance display**  
-
 If you want to watch the recorded demo video, click
-[Road effect][1] This video is not subject to any post processing, such as acceleration  
+[Road effect][1] .This video is not subject to any post processing, such as acceleration  
 
 
 or  
