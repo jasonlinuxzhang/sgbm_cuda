@@ -7,10 +7,14 @@ Opencv does not implement the gpu version of the sgm algorithm, this project is 
 How to compile and use
 
 mkdir build
-cd build
-cmake ..
-make
-Regarding the use of the program, you can look at the program logic in the main function, which is very simple.
+
+cd build 
+
+cmake .. 
+
+make 
+
+Regarding the use of the program, you can look at the program logic in the main function, which is very simple. 
 
 
 Finally
