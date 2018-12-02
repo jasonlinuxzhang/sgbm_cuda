@@ -19,7 +19,15 @@ If you find this program useful, please give me a star, thank you.
 
 
 **Program performance display**
-[此处输入链接的描述][1]
+If you want to watch the recorded demo video, click
+[Road effect][1]
+
+
+or
+[example1][2]
+[example2][3]
 
 
   [1]: https://v.youku.com/v_show/id_XMzk0NjE1MDEwNA==.html?spm=a2hzp.8253869.0.0
+  [2]: https://github.com/jasonlinuxzhang/sgm_cuda/blob/master/example1.jpg
+  [3]: https://github.com/jasonlinuxzhang/sgm_cuda/blob/master/example2.jpg
