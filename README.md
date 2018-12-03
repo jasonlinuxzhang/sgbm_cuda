@@ -1,6 +1,6 @@
-# zhangyou_sgm_cuda  
+# zhangyou_sgbm_cuda  
 
-Opencv does not implement the gpu version of the sgm algorithm, this project is based on the opencv sgm algorithm. After my test, it is 3-4 times faster than the cpu version of the opencv sgm algorithm, and the effect is exactly the same as opencv sgm. The maximum disparity can be set to an integer multiple of 32, the maximum is 256.   
+Opencv does not implement the gpu version of the sgbm algorithm, this project is based on the opencv sgbm algorithm. After my test, it is 3-4 times faster than the cpu version of the opencv sgbm algorithm, and the effect is exactly the same as opencv sgbm. The maximum disparity can be set to an integer multiple of 32, the maximum is 256.   
 
 
 **How to compile and use**  
