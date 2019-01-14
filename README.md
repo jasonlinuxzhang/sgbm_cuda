@@ -2,7 +2,7 @@
 
 Opencv does not implement the gpu version of the sgbm algorithm, this project is based on the opencv sgbm algorithm. After my test, it is 3-4 times faster than the cpu version of the opencv sgbm algorithm, and the effect is exactly the same as opencv sgbm. The maximum disparity can be set to an integer multiple of 32, the maximum is 256.   
 
-After testing, the input image size is recommended to be 640*480. I don't limit the size of the image in the program, but I don't know why other sizes can't work.
+After other people’s tests, the input image size is recommended to be 640*480. I don't limit the size of the image in the program, but I don't know why other sizes can't work.
 
 
 **How to compile and use**  
