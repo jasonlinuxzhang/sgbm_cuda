@@ -4,6 +4,8 @@ Opencv does not implement the gpu version of the sgbm algorithm, this project is
 
 After other people’s tests, the input image size is recommended to be 640*480. I don't limit the size of the image in the program, but I don't know why other sizes can't work.
 
+> NOTE: This bug was fixed partly in commit `df82a9f2c4c2369bd6b327def4da6ad928375c3e`, max image size = [2048, 1024]
+
 
 **How to compile and use**  
 mkdir build  
