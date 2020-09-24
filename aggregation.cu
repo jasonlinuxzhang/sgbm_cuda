@@ -688,6 +688,68 @@ __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *
 
 }
 
+__global__ void get_disparity_ex(const CostType *d_sp, DispType *d_disp, CostType *d_mins, int uniquenessRatio, DispType * d_raw_disp, CostType *disp2cost, DispType *disp2, int cols, int rows)
+{
+	int row = blockIdx.x;
+	int col = threadIdx.x + MAX_DISPARITY + 1024;
+
+	int minS = SHRT_MAX;
+	int bestDisp = -1;
+	const CostType *local_sp = d_sp + (row * cols + col) * MAX_DISPARITY;
+	int d = 0;
+
+	d_disp[row * cols + col] = INVALID_DISP_SCALED;
+	d_mins[row * cols + col] = SHRT_MAX;
+
+	d_raw_disp[row * cols + col] = INVALID_DISP_SCALED;
+	
+
+	/*
+	if(col == 0)
+	{
+		for(int i = 0; i < MAX_DISPARITY; i++)
+		{
+			d_disp[row * cols + i] = INVALID_DISP_SCALED;
+		}
+	}
+	*/
+
+	for(d = 0; d < MAX_DISPARITY; d++)
+	{
+		if(minS > local_sp[d])
+		{
+			minS = local_sp[d];
+			bestDisp = d;
+		}
+	}
+
+	d_mins[row * cols + col] = minS;
+
+	for(d = 0; d < MAX_DISPARITY; d++)
+	{
+		if(local_sp[d] * (100 - uniquenessRatio) < minS * 100 && abs(bestDisp -d) > 1)
+		{
+			break;
+		}
+	}
+	
+	if(d < MAX_DISPARITY)  //说明求得的视差不对，该点视差值取-16
+		return;	
+
+	d_raw_disp[row * cols + col] = bestDisp;
+
+	if(0 < bestDisp && bestDisp < MAX_DISPARITY - 1)
+	{
+		int denom2 = max(local_sp[bestDisp - 1] + local_sp[bestDisp + 1] - 2*local_sp[bestDisp], 1);
+		bestDisp = bestDisp * DISP_SCALE + ((local_sp[bestDisp - 1] - local_sp[bestDisp + 1]) * DISP_SCALE + denom2)/(denom2*2);
+	}
+	else
+		bestDisp = bestDisp * DISP_SCALE;
+//	printf("y=%d, x=%d, bestDisp=%d\n", row, col, bestDisp);
+	d_disp[row * cols + col] = bestDisp;
+
+}
+
 __global__ void lrcheck(DispType * d_disp, const CostType * d_mins, DispType *disp2, CostType *disp2cost, CostType *d_raw_disp, int disp12MaxDiff, int cols, int rows)
 {
 	int row = threadIdx.x;

@@ -126,8 +126,41 @@ cv::Mat compute_disparity(cv::Mat *left_img, cv::Mat *right_img, float *cost_tim
 	cost_aggregation_rl<<<rows, WARP_SIZE>>>(d_cost, d_sp, p1, p2, cols, rows);
 	cudaDeviceSynchronize();
 
-	get_disparity<<<rows, cols - MAX_DISPARITY>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_raw_disp, d_disp2cost, d_disp2, cols, rows);
-	cudaDeviceSynchronize();
+	
+
+	// NOTE Only consider the case that the number of columns exceeds the limit
+	int ex_cols = 0;							
+	if(cols - MAX_DISPARITY > 1024)
+	{
+		// the number of columns exceeds the limit
+		ex_cols = cols - MAX_DISPARITY - 1024;
+		// compute cols id <= 1024
+		get_disparity<<<rows, 1024>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_raw_disp, d_disp2cost, d_disp2, cols, rows);
+		
+		// compute cols id > 1024
+		get_disparity_ex<<<rows, ex_cols>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_raw_disp, d_disp2cost, d_disp2, cols, rows);
+		cudaDeviceSynchronize();
+		err = cudaGetLastError();
+		if(err != cudaSuccess)
+		{
+			std::cout<<"Error: "<< cudaGetErrorString(err) << " " << err << std::endl;
+		}
+	}
+	else
+	{
+		// the number of columns under the limit
+		get_disparity<<<rows, cols - MAX_DISPARITY>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_raw_disp, d_disp2cost, d_disp2, cols, rows);
+		cudaDeviceSynchronize();
+		err = cudaGetLastError();
+		if(err != cudaSuccess)
+		{
+			std::cout<<"Error: gq5 -- "<<cudaGetErrorString(err)<<" "<<err<<std::endl;
+		}
+	}
+
+	// DEPRECATED for large images will broke the hardware limit
+	// get_disparity<<<rows, cols - MAX_DISPARITY>>>(d_sp, d_disp, d_mins, uniquenessRatio, d_raw_disp, d_disp2cost, d_disp2, cols, rows);
+	// cudaDeviceSynchronize();
 	
 	lrcheck<<<1, rows>>>(d_disp, d_mins, d_disp2, d_disp2cost, d_raw_disp, disp12MaxDiff, cols, rows);
 

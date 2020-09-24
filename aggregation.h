@@ -9,6 +9,7 @@ __global__ void cost_aggregation_rl_ud(const CostType *d_cost, CostType *d_sp, i
 __global__ void cost_aggregation_rl(const CostType *d_cost, CostType *d_sp, int p1, int p2, int cols, int rows);
 
 __global__ void get_disparity(const CostType *d_sp, DispType *d_disp, CostType *d_mins, int uniquenessRatio, DispType * d_raw_disp, CostType *disp2cost, DispType *disp2, int cols, int rows);
+__global__ void get_disparity_ex(const CostType *d_sp, DispType *d_disp, CostType *d_mins, int uniquenessRatio, DispType * d_raw_disp, CostType *disp2cost, DispType *disp2, int cols, int rows);
 __global__ void lrcheck(DispType * d_disp, const CostType * d_mins, DispType *disp2, CostType *disp2cost, CostType *d_raw_disp, int disp12MaxDiff, int cols, int rows);
 
 __global__ void MedianFilter(const DispType *d_input, DispType *d_out, int rows, int cols);
